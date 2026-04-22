@@ -60,7 +60,16 @@ public class FirebaseConfig {
     }
 
     private GoogleCredentials resolveCredentials() throws IOException {
-        // 1. Explicit file path on disk
+        // 1. Literal JSON string from environment variable (Best for Render/Heroku)
+        String jsonCredentials = System.getenv("FIREBASE_CREDENTIALS_JSON");
+        if (jsonCredentials != null && !jsonCredentials.isBlank()) {
+            log.info("🔑 Loading Firebase credentials from FIREBASE_CREDENTIALS_JSON environment variable.");
+            try (java.io.InputStream stream = new java.io.ByteArrayInputStream(jsonCredentials.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                return GoogleCredentials.fromStream(stream);
+            }
+        }
+
+        // 2. Explicit file path on disk
         if (credentialsFilePath != null && !credentialsFilePath.isBlank()) {
             log.info("🔑 Loading Firebase credentials from file: {}", credentialsFilePath);
             try (FileInputStream fis = new FileInputStream(credentialsFilePath)) {
