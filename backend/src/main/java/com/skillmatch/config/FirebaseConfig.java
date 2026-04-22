@@ -1,0 +1,86 @@
+package com.skillmatch.config;
+
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+import javax.annotation.PostConstruct;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * Initializes the Firebase Admin SDK once at startup.
+ *
+ * Two credential modes (configure via application.properties):
+ *
+ *  1. File path  → firebase.credentials.path=/path/to/serviceAccountKey.json
+ *  2. Classpath  → firebase.credentials.classpath=true
+ *                  (place serviceAccountKey.json inside src/main/resources/)
+ *
+ * If neither is set, the SDK falls back to Google Application Default Credentials
+ * (works automatically on GCP / Cloud Run / Firebase Functions).
+ */
+@Slf4j
+@Configuration
+public class FirebaseConfig {
+
+    @Value("${firebase.credentials.path:}")
+    private String credentialsFilePath;
+
+    @Value("${firebase.credentials.classpath:false}")
+    private boolean useClasspath;
+
+    @PostConstruct
+    public void initialize() {
+        // Only initialize once (safe for hot-reload dev environments)
+        if (!FirebaseApp.getApps().isEmpty()) {
+            return;
+        }
+
+        try {
+            GoogleCredentials credentials = resolveCredentials();
+
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(credentials)
+                    .build();
+
+            FirebaseApp.initializeApp(options);
+            log.info("✅ Firebase Admin SDK initialized successfully.");
+
+        } catch (IOException e) {
+            log.error("❌ Failed to initialize Firebase Admin SDK. " +
+                      "Set 'firebase.credentials.path' in application.properties. " +
+                      "Error: {}", e.getMessage());
+            // Don't throw – allow app to start; only Google login will fail
+        }
+    }
+
+    private GoogleCredentials resolveCredentials() throws IOException {
+        // 1. Explicit file path on disk
+        if (credentialsFilePath != null && !credentialsFilePath.isBlank()) {
+            log.info("🔑 Loading Firebase credentials from file: {}", credentialsFilePath);
+            try (FileInputStream fis = new FileInputStream(credentialsFilePath)) {
+                return GoogleCredentials.fromStream(fis);
+            }
+        }
+
+        // 2. Classpath resource (src/main/resources/serviceAccountKey.json)
+        if (useClasspath) {
+            log.info("🔑 Loading Firebase credentials from classpath.");
+            InputStream stream = getClass().getClassLoader()
+                    .getResourceAsStream("serviceAccountKey.json");
+            if (stream == null) {
+                throw new IOException("serviceAccountKey.json not found in classpath.");
+            }
+            return GoogleCredentials.fromStream(stream);
+        }
+
+        // 3. Application Default Credentials (GCP / Cloud Run / local gcloud auth)
+        log.info("🔑 Using Google Application Default Credentials for Firebase.");
+        return GoogleCredentials.getApplicationDefault();
+    }
+}

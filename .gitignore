@@ -1,0 +1,46 @@
+# =========================
+# Root Level
+# =========================
+node_modules/
+.env
+.env.*
+!.env.example
+.idea/
+.vscode/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# =========================
+# Frontend (React/Vite)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# =========================
+# Backend (Spring Boot)
+# =========================
+backend/target/
+backend/*.iml
+backend/.settings/
+backend/.classpath
+backend/.project
+backend/src/main/resources/serviceAccountKey.json
+backend/uploads/
+
+# =========================
+# AI Service (Python)
+# =========================
+ai-service/venv/
+ai-service/__pycache__/
+ai-service/*.pyc
+ai-service/.env
+ai-service/.pytest_cache/
