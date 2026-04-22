@@ -1,0 +1,47 @@
+# Render Blueprint to automatically deploy both services
+services:
+  # 1. Python AI Service
+  - type: web
+    name: skillmatch-ai-service
+    env: docker
+    dockerfilePath: ./ai-service/Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 5000
+
+  # 2. Java Spring Boot Backend
+  - type: web
+    name: skillmatch-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: PORT
+        value: 8080
+      
+      # Tell Java to talk to the AI service over Render's ultra-fast internal network
+      - key: flask.service.url
+        value: http://skillmatch-ai-service:5000
+        
+      # Tell Java to read the Firebase credentials from Render's Secret Files
+      - key: firebase.credentials.path
+        value: /etc/secrets/serviceAccountKey.json
+      - key: firebase.credentials.classpath
+        value: "false"
+
+      # The following variables will be prompted for in the Render Dashboard:
+      - key: spring.data.mongodb.uri
+        sync: false
+      - key: cloudinary.cloud-name
+        sync: false
+      - key: cloudinary.api-key
+        sync: false
+      - key: cloudinary.api-secret
+        sync: false
+      - key: spring.mail.username
+        sync: false
+      - key: spring.mail.password
+        sync: false
