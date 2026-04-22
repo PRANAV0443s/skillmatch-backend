@@ -2,7 +2,7 @@
 // firebase.js – SkillMatch Firebase initialization
 // All values come from .env (VITE_FIREBASE_*)
 // ============================================================
-import { initializeApp } from 'firebase/app'
+import { initializeApp, getApps } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
@@ -12,42 +12,31 @@ import {
   signOut,
   browserLocalPersistence,
   setPersistence,
-} from 'firebase/auth'
+} from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
-}
+  apiKey: "AIzaSyC-HqpzEfJ3WLOH1CUQ4rSd5Itbzxp_54A",
+  authDomain: "skillmatch-1343d.firebaseapp.com",
+  projectId: "skillmatch-1343d",
+  storageBucket: "skillmatch-1343d.firebasestorage.app",
+  messagingSenderId: "209035377906",
+  appId: "1:209035377906:web:d2e532b5e1f2446dcf246b"
+};
 
-// Validate config at startup (dev-friendly error message)
-if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
-  console.error(
-    '⚠️  Firebase is not configured.\n' +
-    'Copy frontend/.env.example → frontend/.env and fill in your Firebase project values.\n' +
-    'See FIREBASE_SETUP.md for step-by-step instructions.'
-  )
-}
+const app = getApps().length === 0
+  ? initializeApp(firebaseConfig)
+  : getApps()[0];
 
-const app    = initializeApp(firebaseConfig)
-export const auth    = getAuth(app)
-export const googleProvider = new GoogleAuthProvider()
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
+setPersistence(auth, browserLocalPersistence).catch(() => {});
 
-// Force account picker every time (allows switching Google accounts)
-googleProvider.setCustomParameters({ prompt: 'select_account' })
-
-// Persist login across browser sessions
-setPersistence(auth, browserLocalPersistence).catch(() => {})
-
-// Named exports for convenience
 export {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-}
+};
 
-export default app
+export default app;
