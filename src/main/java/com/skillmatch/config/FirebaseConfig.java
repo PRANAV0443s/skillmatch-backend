@@ -60,7 +60,22 @@ public class FirebaseConfig {
     }
 
     private GoogleCredentials resolveCredentials() throws IOException {
-        // 1. Literal JSON string from environment variable (Best for Render/Heroku)
+        // 0. Support Base64 encoded JSON (100% immune to Render newline stripping)
+        String base64Credentials = System.getenv("FIREBASE_CREDENTIALS_BASE64");
+        if (base64Credentials != null && !base64Credentials.isBlank()) {
+            log.info("🔑 Loading Firebase credentials from FIREBASE_CREDENTIALS_BASE64...");
+            try {
+                byte[] decodedBytes = java.util.Base64.getDecoder().decode(base64Credentials);
+                try (java.io.InputStream stream = new java.io.ByteArrayInputStream(decodedBytes)) {
+                    return GoogleCredentials.fromStream(stream);
+                }
+            } catch (Exception e) {
+                log.error("❌ Failed to parse Base64 credentials: {}", e.getMessage());
+                throw new IOException("Invalid Base64 Firebase Credentials", e);
+            }
+        }
+
+        // 1. Literal JSON string from environment variable
         String jsonCredentials = System.getenv("FIREBASE_CREDENTIALS_JSON");
         if (jsonCredentials != null && !jsonCredentials.isBlank()) {
             log.info("🔑 Loading Firebase credentials from FIREBASE_CREDENTIALS_JSON environment variable.");
