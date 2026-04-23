@@ -45,4 +45,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody com.skillmatch.dto.GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.googleLogin(request));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(Authentication authentication) {
+        return ResponseEntity.ok(authentication.getName());
+    }
 }
