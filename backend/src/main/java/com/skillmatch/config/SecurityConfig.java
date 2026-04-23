@@ -9,11 +9,10 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     @Bean
-                ecurityFilterChain securityFi
-                
-                        f(csrf -> csrf.disable())
-                        horizeHttpRequests(auth -> au    .requestMatchers("/", "/auth/**").permitAll()
-                .anyRequest().authenticated()
-            );
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -> csrf.disable());
 
- 
+        return http.build();
+    }
+}
