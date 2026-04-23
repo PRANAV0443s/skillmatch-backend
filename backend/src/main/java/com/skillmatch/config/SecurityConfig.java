@@ -43,9 +43,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/test", "/error").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/uploads/**").permitAll()
-                .requestMatchers("/error").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/jobs/**").authenticated()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/jobs").hasAnyRole("RECRUITER", "ADMIN")
@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"message\": \"Unauthorized\"}");
+                    response.getWriter().write("{\"message\": \"Unauthorized\", \"path\": \"" + request.getRequestURI() + "\"}");
                 })
             )
             .formLogin(form -> form.disable())

@@ -171,16 +171,21 @@ public class AuthService {
     }
 
     public AuthResponse googleLogin(GoogleAuthRequest request) {
+        log.info("Starting Google authentication for token: {}...", 
+            request.getIdToken().substring(0, Math.min(10, request.getIdToken().length())));
         try {
             // Verify the token using Firebase Admin SDK
             FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(request.getIdToken());
             
             String email = decodedToken.getEmail().toLowerCase().trim();
+            log.info("Firebase token verified for email: {}", email);
+            
             String name = decodedToken.getName();
             String photoUrl = decodedToken.getPicture();
 
             User user = userRepository.findByEmail(email).orElse(null);
             if (user == null) {
+                log.info("New user detected via Google login: {}", email);
                 String tempPassword = UUID.randomUUID().toString();
                 String role = request.getRole() != null ? request.getRole() : "STUDENT";
                 user = User.builder()
@@ -192,16 +197,18 @@ public class AuthService {
                         .verified(true) // Google accounts are implicitly verified
                         .build();
                 userRepository.save(user);
-            } else if (user.getPhotoUrl() == null && photoUrl != null) {
-                // Update photo URL if it was missing
-                user.setPhotoUrl(photoUrl);
-                userRepository.save(user);
-            } else if (!user.isVerified()) {
-                // Auto-verify if they happened to sign up via email first but didn't verify
-                user.setVerified(true);
-                user.setOtp(null);
-                user.setOtpExpiry(null);
-                userRepository.save(user);
+            } else {
+                log.info("Existing user logged in via Google: {}", email);
+                if (user.getPhotoUrl() == null && photoUrl != null) {
+                    user.setPhotoUrl(photoUrl);
+                    userRepository.save(user);
+                }
+                if (!user.isVerified()) {
+                    user.setVerified(true);
+                    user.setOtp(null);
+                    user.setOtpExpiry(null);
+                    userRepository.save(user);
+                }
             }
 
             String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
@@ -219,7 +226,9 @@ public class AuthService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Google/Firebase authentication failed", e);
+            log.error("Google/Firebase authentication failed for token: {}. Error: {}", 
+                request.getIdToken().substring(0, Math.min(10, request.getIdToken().length())), 
+                e.getMessage());
             throw new RuntimeException("Failed to authenticate with Google: " + e.getMessage());
         }
     }
