@@ -3,41 +3,34 @@ package com.skillmatch.config;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
-import jakarta.annotation.PostConstruct;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.ByteArrayInputStream;
-import java.util.Base64;
+import javax.annotation.PostConstruct;
+import java.io.InputStream;
 
 @Configuration
 public class FirebaseConfig {
 
     @PostConstruct
     public void init() {
-      try {  
-          String base64Credent  ystem.getenv("FIREBASE_CREDENTIALS_BASE64");
+        try {
+            InputStream serviceAccount =
+                    getClass().getClassLoader().getResourceAsStream("firebase-service-account.json");
 
-            if (base64Credentials == null || base64Credentials.isEmp
- * 
- * y()) {
-                System.out.println("⚠️ Firebase credentials not found. Skipping Firebase initialization.");
-                return; // DO NOT CRASH APP
+            if (serviceAccount == null) {
+                throw new RuntimeException("Firebase config file not found");
             }
 
-            byte[] decoded = Base64.getDecoder().decode(base64Credentials);
-
             FirebaseOptions options = FirebaseOptions.builder()
-                    .setCredentials(GoogleCredentials.fromStream(new ByteArrayInputStream(decoded)))
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
             if (FirebaseApp.getApps().isEmpty()) {
                 FirebaseApp.initializeApp(options);
-                System.out.println("✅ Firebase initialized successfully");
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("❌ Firebase initialization failed");
+            throw new RuntimeException("Firebase initialization failed", e);
         }
     }
 }
