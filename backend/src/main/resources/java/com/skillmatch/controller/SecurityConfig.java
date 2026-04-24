@@ -11,9 +11,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Disable CSRF (required for APIs)
                 .csrf(csrf -> csrf.disable())
+
+                // Allow public endpoints
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/health").permitAll()
+                        .requestMatchers("/", "/health", "/auth/**").permitAll() // ✅ VERY IMPORTANT
                         .anyRequest().authenticated());
 
         return http.build();
