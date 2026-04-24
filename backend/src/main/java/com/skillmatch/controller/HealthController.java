@@ -16,4 +16,13 @@ public class HealthController {
                 "message", "SkillMatch API is online",
                 "version", "1.0.0"));
     }
+
+    @RestController
+    public class HomeController {
+
+        @GetMapping("/")
+        public String home() {
+            return "SkillMatch Backend Live 🚀";
+        }
+    }
 }
