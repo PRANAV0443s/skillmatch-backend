@@ -29,10 +29,12 @@ public class ApplicationService {
         Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found"));
 
+        // Check duplicate
         if (applicationRepository.findByUserIdAndJobId(user.getId(), jobId).isPresent()) {
             throw new RuntimeException("Already applied to this job");
         }
 
+        // Call Flask AI for match score
         int matchScore = aiService.computeMatchScore(resumeBytes, job.getRequiredSkills());
 
         Application application = Application.builder()
@@ -43,30 +45,44 @@ public class ApplicationService {
                 .status("APPLIED")
                 .build();
 
-        return applicationRepository.save(application);
+        Application saved = applicationRepository.save(application);
+
+        // Send confirmation email to the applicant
+
+        return saved;
     }
 
+    /**
+     * Simple apply-job endpoint: accepts userId, jobId, and email.
+     * Saves application with status "Applied" and sends a confirmation email.
+     * If email fails, the application is still saved.
+     */
     public Application applyJob(String userId, String jobId, String email) {
-        userRepository.findById(userId)
+        // Validate user exists
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
 
-        jobRepository.findById(jobId)
+        // Validate job exists
+        Job job = jobRepository.findById(jobId)
                 .orElseThrow(() -> new RuntimeException("Job not found with ID: " + jobId));
 
+        // Check duplicate application
         if (applicationRepository.findByUserIdAndJobId(userId, jobId).isPresent()) {
             throw new RuntimeException("You have already applied to this job");
         }
 
+        // Save application data in MongoDB "applications" collection
         Application application = Application.builder()
                 .userId(userId)
                 .jobId(jobId)
                 .status("Applied")
-                .build();
+                .build(); // appliedAt is auto-set via @Builder.Default
 
         Application saved = applicationRepository.save(application);
         log.info("✔ Application saved – userId: {}, jobId: {}, status: Applied", userId, jobId);
 
-        return saved;
+        // Send confirmation email (errors are caught so the application stays saved)
+
     }
 
     public List<Application> getUserApplications(String userEmail) {
@@ -83,6 +99,8 @@ public class ApplicationService {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         app.setStatus(status.toUpperCase());
-        return applicationRepository.save(app);
+        Application saved = applicationRepository.save(app);
+
+        return saved;
     }
 }

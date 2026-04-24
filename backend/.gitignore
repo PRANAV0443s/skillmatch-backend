@@ -36,3 +36,5 @@ build/
 src/main/resources/serviceAccountKey.json
 *.log
 uploads/
+*.json
+.env
