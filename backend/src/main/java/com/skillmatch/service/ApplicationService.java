@@ -82,6 +82,7 @@ public class ApplicationService {
         log.info("✔ Application saved – userId: {}, jobId: {}, status: Applied", userId, jobId);
 
         // Send confirmation email (errors are caught so the application stays saved)
+        return saved;
 
     }
 
