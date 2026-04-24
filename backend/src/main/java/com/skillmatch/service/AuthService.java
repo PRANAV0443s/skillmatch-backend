@@ -173,6 +173,7 @@ public class AuthService {
 
     public AuthResponse googleLogin(GoogleAuthRequest request) {
         try {
+            // Verify Firebase token
             FirebaseToken decodedToken = FirebaseAuth.getInstance()
                     .verifyIdToken(request.getIdToken());
 
@@ -180,8 +181,10 @@ public class AuthService {
             String name = decodedToken.getName();
             String photoUrl = decodedToken.getPicture();
 
+            // Find user
             User user = userRepository.findByEmail(email).orElse(null);
 
+            // Create user if not exists
             if (user == null) {
                 user = new User();
                 user.setEmail(email);
@@ -189,8 +192,15 @@ public class AuthService {
                 user.setPhotoUrl(photoUrl);
                 user.setVerified(true);
                 user = userRepository.save(user);
+            } else {
+                // Update existing user info
+                user.setName(name);
+                user.setPhotoUrl(photoUrl);
+                user.setVerified(true);
+                user = userRepository.save(user);
             }
 
+            // Return response
             return AuthResponse.builder()
                     .userId(user.getId())
                     .name(user.getName())
