@@ -26,7 +26,6 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-    private final EmailService emailService;
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -110,30 +109,6 @@ public class AuthService {
                 .skills(user.getSkills())
                 .verified(true)
                 .message("Email verified successfully")
-                .build();
-    }
-
-    public AuthResponse resendOtp(String email) {
-        email = email.toLowerCase().trim();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        if (user.isVerified()) {
-            throw new RuntimeException("Email already verified");
-        }
-
-        String otp = generateOtp();
-        user.setOtp(otp);
-        user.setOtpExpiry(LocalDateTime.now().plusMinutes(10));
-        userRepository.save(user);
-
-        emailService.sendOtpEmail(email, otp, user.getName());
-        log.info("OTP resent to: {}", email);
-
-        return AuthResponse.builder()
-                .email(email)
-                .verified(false)
-                .message("New verification code sent to " + email)
                 .build();
     }
 

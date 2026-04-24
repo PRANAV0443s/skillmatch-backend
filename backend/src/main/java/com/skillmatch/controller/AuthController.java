@@ -35,12 +35,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.verifyEmail(email, otp));
     }
 
-    @PostMapping("/resend-otp")
-    public ResponseEntity<AuthResponse> resendOtp(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        return ResponseEntity.ok(authService.resendOtp(email));
-    }
-
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody com.skillmatch.dto.GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.googleLogin(request));
