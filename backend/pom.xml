@@ -103,7 +103,6 @@
 
   <build>
     <plugins>
-      <!-- Compiler plugin: register Lombok as annotation processor -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
@@ -119,19 +118,14 @@
           </annotationProcessorPaths>
         </configuration>
       </plugin>
-
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
-          <excludes>
-            <exclude>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-            </exclude>
-          </excludes>
+          <mainClass>com.skillmatch.SkillMatchApplication</mainClass>
         </configuration>
       </plugin>
     </plugins>
   </build>
+
 </project>

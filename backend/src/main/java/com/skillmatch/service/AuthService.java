@@ -56,7 +56,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
-        
+
         log.info("New user registered and auto-verified: {}", email);
 
         // Issue JWT token immediately
@@ -146,7 +146,7 @@ public class AuthService {
             throw new RuntimeException("Invalid credentials");
         }
 
-        // Auto-verify old unverified accounts on login
+        // Auto-verify user on login if not already verified
         if (!user.isVerified()) {
             user.setVerified(true);
             user.setOtp(null);
@@ -167,54 +167,31 @@ public class AuthService {
                 .resumeUrl(user.getResumeUrl())
                 .skills(user.getSkills())
                 .verified(true)
+                .message("Login successful")
                 .build();
     }
 
     public AuthResponse googleLogin(GoogleAuthRequest request) {
-        log.info("Starting Google authentication for token: {}...", 
-            request.getIdToken().substring(0, Math.min(10, request.getIdToken().length())));
         try {
-            // Verify the token using Firebase Admin SDK
-            FirebaseToken decodedToken = FirebaseAuth.getInstance().verifyIdToken(request.getIdToken());
-            
+            FirebaseToken decodedToken = FirebaseAuth.getInstance()
+                    .verifyIdToken(request.getIdToken());
+
             String email = decodedToken.getEmail().toLowerCase().trim();
-            log.info("Firebase token verified for email: {}", email);
-            
             String name = decodedToken.getName();
             String photoUrl = decodedToken.getPicture();
 
             User user = userRepository.findByEmail(email).orElse(null);
+
             if (user == null) {
-                log.info("New user detected via Google login: {}", email);
-                String tempPassword = UUID.randomUUID().toString();
-                String role = request.getRole() != null ? request.getRole() : "STUDENT";
-                user = User.builder()
-                        .name(name)
-                        .email(email)
-                        .photoUrl(photoUrl)
-                        .password(passwordEncoder.encode(tempPassword))
-                        .role(role)
-                        .verified(true) // Google accounts are implicitly verified
-                        .build();
-                userRepository.save(user);
-            } else {
-                log.info("Existing user logged in via Google: {}", email);
-                if (user.getPhotoUrl() == null && photoUrl != null) {
-                    user.setPhotoUrl(photoUrl);
-                    userRepository.save(user);
-                }
-                if (!user.isVerified()) {
-                    user.setVerified(true);
-                    user.setOtp(null);
-                    user.setOtpExpiry(null);
-                    userRepository.save(user);
-                }
+                user = new User();
+                user.setEmail(email);
+                user.setName(name);
+                user.setPhotoUrl(photoUrl);
+                user.setVerified(true);
+                user = userRepository.save(user);
             }
 
-            String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
-
             return AuthResponse.builder()
-                    .token(token)
                     .userId(user.getId())
                     .name(user.getName())
                     .email(user.getEmail())
@@ -222,29 +199,12 @@ public class AuthService {
                     .role(user.getRole())
                     .resumeUrl(user.getResumeUrl())
                     .skills(user.getSkills())
-                    .verified(true)
+                    .verified(user.isVerified())
+                    .message("Google login successful")
                     .build();
 
         } catch (Exception e) {
-            log.error("Google/Firebase authentication failed for token: {}. Error: {}", 
-                request.getIdToken().substring(0, Math.min(10, request.getIdToken().length())), 
-                e.getMessage());
+            throw new RuntimeException("Google authentication failed", e);
         }
-    }
-
-    public AuthResponse getCurrentUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-                
-        return AuthResponse.builder()
-                .userId(user.getId())
-                .name(user.getName())
-                .email(user.getEmail())
-                .photoUrl(user.getPhotoUrl())
-                .role(user.getRole())
-                .resumeUrl(user.getResumeUrl())
-                .skills(user.getSkills())
-                .verified(user.isVerified())
-                .build();
     }
 }
