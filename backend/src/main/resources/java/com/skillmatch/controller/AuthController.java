@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -28,19 +27,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
-    @PostMapping("/verify-email")
-    public ResponseEntity<AuthResponse> verifyEmail(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        String otp = body.get("otp");
-        return ResponseEntity.ok(authService.verifyEmail(email, otp));
-    }
-
-    @PostMapping("/resend-otp")
-    public ResponseEntity<AuthResponse> resendOtp(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        return ResponseEntity.ok(authService.resendOtp(email));
-    }
-
     @PostMapping("/google")
     public ResponseEntity<AuthResponse> googleLogin(@Valid @RequestBody com.skillmatch.dto.GoogleAuthRequest request) {
         return ResponseEntity.ok(authService.googleLogin(request));
@@ -53,5 +39,4 @@ public class AuthController {
         }
         return authentication.getName();
     }
-
 }
