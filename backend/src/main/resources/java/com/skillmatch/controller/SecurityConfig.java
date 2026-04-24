@@ -13,7 +13,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/api/health").permitAll() // ✅ allow these
+                        .requestMatchers("/", "/api/health").permitAll() // ✅ allow public
                         .anyRequest().authenticated());
 
         return http.build();
