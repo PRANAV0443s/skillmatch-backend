@@ -36,6 +36,10 @@ public class JwtUtil {
                 .compact();
     }
 
+    public String extractUsername(String token) {
+        return extractEmail(token);
+    }
+
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -44,10 +48,15 @@ public class JwtUtil {
         return extractClaim(token, claims -> claims.get("role", String.class));
     }
 
+    public boolean validateToken(String token, UserDetails userDetails) {
+        return isTokenValid(token, userDetails);
+    }
+
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
         return email.equals(userDetails.getUsername()) && !isTokenExpired(token);
     }
+
 
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());

@@ -47,7 +47,11 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMe(Authentication authentication) {
-        return ResponseEntity.ok(authentication.getName());
+    public String getCurrentUser(Authentication authentication) {
+        if (authentication == null) {
+            return "No user authenticated";
+        }
+        return authentication.getName();
     }
+
 }

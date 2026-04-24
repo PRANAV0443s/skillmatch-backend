@@ -229,7 +229,22 @@ public class AuthService {
             log.error("Google/Firebase authentication failed for token: {}. Error: {}", 
                 request.getIdToken().substring(0, Math.min(10, request.getIdToken().length())), 
                 e.getMessage());
-            throw new RuntimeException("Failed to authenticate with Google: " + e.getMessage());
         }
+    }
+
+    public AuthResponse getCurrentUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+                
+        return AuthResponse.builder()
+                .userId(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .photoUrl(user.getPhotoUrl())
+                .role(user.getRole())
+                .resumeUrl(user.getResumeUrl())
+                .skills(user.getSkills())
+                .verified(user.isVerified())
+                .build();
     }
 }
